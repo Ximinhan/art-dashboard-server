@@ -1,6 +1,5 @@
 import lib.http_requests as http_req
 
-
 def handle_get_request_for_branch_data_view(request):
 
     request_type = request.query_params.get("type", None)

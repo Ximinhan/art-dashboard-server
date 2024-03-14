@@ -13,10 +13,13 @@ from .serializer import BuildSerializer
 import django_filters
 import json
 import re
+import yaml
 import os
 import jwt
 from datetime import datetime, timedelta
+from github import Github
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
+from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, get_feature_freeze_schedule, get_ga_schedule
 
 
 class BuildDataFilter(django_filters.FilterSet):
@@ -167,6 +170,72 @@ def branch_data(request):
         data = request_dispatcher.handle_get_request_for_branch_data_view(request)
         response = Response(data=data)
         return response
+
+
+@api_view(["GET"])
+def get_advisory_activities(request):
+    request_id = request.query_params.get("advisory", None)
+
+    if request_id is None:
+        return Response(data={"status": "error", "message": "Missing \"advisory\" params in the url."})
+    else:
+        response = Response(data=get_advisory_status_activities(request_id))
+        return response
+
+
+@api_view(["GET"])
+def get_release_schedule(request):
+    request_type = request.query_params.get("type", None)
+    branch_version = request.query_params.get("branch_version", None)
+
+    if request_type is None:
+        return Response(data={"status": "error", "message": "Missing \"type\" params in the url."})
+    if request_type not in ["ga", "release", "feature_freeze"]:
+        return Response(data={"status": "error", "message": "Invalid \"type\" params in the url. It sould be in ga,release,feature_freeze"})
+    if branch_version is None:
+        return Response(data={"status": "error", "message": "Missing \"branch_version\" params in the url."})
+    if request_type == "ga":
+        return Response(data=get_ga_schedule(branch_version))
+    elif request_type == "release":
+        return Response(data=get_release_schedule(branch_version))
+    elif request_type == "feature_freeze":
+        return Response(data=get_feature_freeze_schedule(branch_version))
+
+@api_view(["GET"])
+def get_release_status(request):
+    # Need github token
+    github_token = os.environ.get('GITHUB_TOKEN', None)
+    ga_version = get_ga_version()
+    major, minor = int(ga_version.split('.')[0]), int(ga_version.split('.')[1])
+    status = {"message":[], "alert":[]}
+    ocp_build_data = Github(github_token).get_repo("openshift/ocp-build-data")
+    while minor > 0:
+        if yaml.load(ocp_build_data.get_contents("group.yml", ref=f"openshift-{major}.{minor}").decoded_content,Loader=yaml.FullLoader)['software_lifecycle']['phase'] != "eol":
+            for release in get_advisory_schedule(f"{major}.{minor}")['all_ga_tasks']:
+                if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now():
+                    release_date, release_name = release['date_finish'], release['name']
+                else:
+                    break
+            if "GA" in release_name:
+                assembly = re.search(r'\d+\.\d+', release_name).group()+".0"
+            else:
+                assembly = re.search(r'\d+\.\d+.\d+', release_name).group()
+            status['message'].append({"release":f"{major}.{minor}",
+                                    "status": f"{assembly} release date is {release_date} and {release['name']} release date is {release['date_finish']}"})
+            advisories = yaml.load(ocp_build_data.get_contents("releases.yml", ref=f"openshift-{major}.{minor}").decoded_content,Loader=yaml.FullLoader)['releases'][assembly]['assembly']['group']['advisories']
+            for ad in advisories:
+                errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
+                if datetime.strptime(release_date,"%Y-%m-%d") ==  datetime.now().strftime("%Y-%m-%d"):
+                    if errata_state != "SHIPPED_LIVE":
+                        status['alert'].append({"release":f"{major}.{minor}",
+                                                "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
+                    else:
+                        status['alert'].append({"release":f"{major}.{minor}",
+                                                "status": f"{assembly} {ad} advisory is shipped live"})
+            minor = minor - 1
+        else:
+            break
+    return Response(data=status)
 
 
 @api_view(["GET"])
