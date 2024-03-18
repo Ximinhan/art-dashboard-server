@@ -204,6 +204,8 @@ def get_release_schedule(request):
         return Response(data=get_feature_freeze_schedule(branch_version))
 
 
+shipped_advisory = []
+
 @api_view(["GET"])
 def get_release_status(request):
     # Need github token
@@ -227,12 +229,16 @@ def get_release_status(request):
             res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{minor}", headers=headers)
             advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
             for ad in advisories:
-                errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
                 if datetime.strptime(release_date,"%Y-%m-%d") ==  datetime.now().strftime("%Y-%m-%d"):
-                    if errata_state != "SHIPPED_LIVE":
-                        status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
-                    else:
+                    if advisories[ad] in shipped_advisory:
                         status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is shipped live"})
+                    else:
+                        errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
+                        if errata_state != "SHIPPED_LIVE":
+                            status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
+                        else:
+                            shipped_advisory.append(advisories[ad])
+                            status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is shipped live"})
             minor = minor - 1
         else:
             break
