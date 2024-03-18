@@ -18,6 +18,8 @@ import os
 import jwt
 from datetime import datetime, timedelta
 from github import Github
+import requests
+import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
 from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, get_feature_freeze_schedule, get_ga_schedule
 
@@ -205,13 +207,13 @@ def get_release_schedule(request):
 @api_view(["GET"])
 def get_release_status(request):
     # Need github token
-    github_token = os.environ.get('GITHUB_TOKEN', None)
     ga_version = get_ga_version()
     major, minor = int(ga_version.split('.')[0]), int(ga_version.split('.')[1])
     status = {"message":[], "alert":[]}
-    ocp_build_data = Github(github_token).get_repo("openshift/ocp-build-data")
+    headers = {"Authorization": f"token {os.environ['GITHUB_PERSONAL_ACCESS_TOKEN']}"}
     while minor > 0:
-        if yaml.load(ocp_build_data.get_contents("group.yml", ref=f"openshift-{major}.{minor}").decoded_content,Loader=yaml.FullLoader)['software_lifecycle']['phase'] != "eol":
+        res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/group.yml?ref=openshift-{major}.{minor}", headers=headers)
+        if yaml.safe_load(base64.b64decode(res.json()['content']))['software_lifecycle']['phase'] != "eol":
             for release in get_advisory_schedule(f"{major}.{minor}")['all_ga_tasks']:
                 if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now():
                     release_date, release_name = release['date_finish'], release['name']
@@ -221,18 +223,16 @@ def get_release_status(request):
                 assembly = re.search(r'\d+\.\d+', release_name).group()+".0"
             else:
                 assembly = re.search(r'\d+\.\d+.\d+', release_name).group()
-            status['message'].append({"release":f"{major}.{minor}",
-                                    "status": f"{assembly} release date is {release_date} and {release['name']} release date is {release['date_finish']}"})
-            advisories = yaml.load(ocp_build_data.get_contents("releases.yml", ref=f"openshift-{major}.{minor}").decoded_content,Loader=yaml.FullLoader)['releases'][assembly]['assembly']['group']['advisories']
+            status['message'].append({"release":f"{major}.{minor}", "status": f"{assembly} release date is {release_date} and {release['name']} release date is {release['date_finish']}"})
+            res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{minor}", headers=headers)
+            advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
             for ad in advisories:
                 errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
                 if datetime.strptime(release_date,"%Y-%m-%d") ==  datetime.now().strftime("%Y-%m-%d"):
                     if errata_state != "SHIPPED_LIVE":
-                        status['alert'].append({"release":f"{major}.{minor}",
-                                                "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
+                        status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
                     else:
-                        status['alert'].append({"release":f"{major}.{minor}",
-                                                "status": f"{assembly} {ad} advisory is shipped live"})
+                        status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is shipped live"})
             minor = minor - 1
         else:
             break
