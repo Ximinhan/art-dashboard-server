@@ -201,6 +201,7 @@ def get_release_schedule(request):
     elif request_type == "feature_freeze":
         return Response(data=get_feature_freeze_schedule(branch_version))
 
+
 @api_view(["GET"])
 def get_release_status(request):
     # Need github token
