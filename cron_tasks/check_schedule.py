@@ -8,7 +8,7 @@ release_status = requests.get("https://art-dash-server-hackspace-ximhan.apps.art
 if release_status['alert'] != []:
     response = WebClient(token=slack_token).chat_postMessage(
             channel="#art-bot-monitoring",
-            text=''.join([msg['status'] for msg in release_status['alert']]),
+            text=' \n'.join([msg['status'] for msg in release_status['alert']]),
             thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":robot_face:", reply_broadcast=False)
 else:
     print("No alert", [msg['status'] for msg in release_status['message']])
