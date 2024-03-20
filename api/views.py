@@ -17,7 +17,6 @@ import yaml
 import os
 import jwt
 from datetime import datetime, timedelta
-from github import Github
 import requests
 import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
