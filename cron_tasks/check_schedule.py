@@ -9,7 +9,7 @@ if release_status['alert'] != []:
     response = WebClient(token=slack_token).chat_postMessage(
             channel="#art-bot-monitoring",
             text=' \n'.join([msg['status'] for msg in release_status['alert']]),
-            thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_rebot:", reply_broadcast=False)
+            thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
     print(f"message posted in https://redhat-internal.slack.com/archives/{response['channel']}/p{response['ts']}")
 else:
     print("No alert", [msg['status'] for msg in release_status['message']])
