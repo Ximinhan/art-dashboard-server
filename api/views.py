@@ -4,6 +4,7 @@ from rest_framework import filters, viewsets, status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from django.http import JsonResponse
 from api.fetchers import rpms_images_fetcher
 from api.image_pipeline import pipeline_image_names
 from api.util import get_ga_version
@@ -178,10 +179,9 @@ def get_advisory_activities(request):
     request_id = request.query_params.get("advisory", None)
 
     if request_id is None:
-        return Response(data={"status": "error", "message": "Missing \"advisory\" params in the url."})
+        return JsonResponse({"status": "error", "message": "Missing \"advisory\" params in the url."})
     else:
-        response = Response(data=get_advisory_status_activities(request_id))
-        return response
+        return JsonResponse(get_advisory_status_activities(request_id))
 
 
 @api_view(["GET"])
@@ -190,17 +190,17 @@ def get_release_schedule(request):
     branch_version = request.query_params.get("branch_version", None)
 
     if request_type is None:
-        return Response(data={"status": "error", "message": "Missing \"type\" params in the url."})
+        return JsonResponse({"status": "error", "message": "Missing \"type\" params in the url."})
     if request_type not in ["ga", "release", "feature_freeze"]:
-        return Response(data={"status": "error", "message": "Invalid \"type\" params in the url. It sould be in ga,release,feature_freeze"})
+        return JsonResponse({"status": "error", "message": "Invalid \"type\" params in the url. It sould be in ga,release,feature_freeze"})
     if branch_version is None:
-        return Response(data={"status": "error", "message": "Missing \"branch_version\" params in the url."})
+        return JsonResponse({"status": "error", "message": "Missing \"branch_version\" params in the url."})
     if request_type == "ga":
-        return Response(data=get_ga_schedule(branch_version))
+        return JsonResponse(get_ga_schedule(branch_version))
     elif request_type == "release":
-        return Response(data=get_release_schedule(branch_version))
+        return JsonResponse(get_release_schedule(branch_version))
     elif request_type == "feature_freeze":
-        return Response(data=get_feature_freeze_schedule(branch_version))
+        return JsonResponse(get_feature_freeze_schedule(branch_version))
 
 
 shipped_advisory = []
@@ -237,36 +237,7 @@ def get_release_status(request):
                     else:
                         shipped_advisory.append(advisories[ad])
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
-    # while minor > 0:
-    #     res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/group.yml?ref=openshift-{major}.{minor}", headers=headers)
-    #     if yaml.safe_load(base64.b64decode(res.json()['content']))['software_lifecycle']['phase'] != "eol":
-    #         for release in get_advisory_schedule(f"{major}.{minor}")['all_ga_tasks']:
-    #             if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now():
-    #                 release_date, release_name = release['date_finish'], release['name']
-    #             else:
-    #                 break
-    #         if "GA" in release_name:
-    #             assembly = re.search(r'\d+\.\d+', release_name).group()+".0"
-    #         else:
-    #             assembly = re.search(r'\d+\.\d+.\d+', release_name).group()
-    #         status['message'].append({"release":f"{major}.{minor}", "status": f"{assembly} release date is {release_date} and {release['name']} release date is {release['date_finish']}"})
-    #         res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{minor}", headers=headers)
-    #         advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
-    #         for ad in advisories:
-    #             if datetime.strptime(release_date,"%Y-%m-%d") ==  datetime.now().strftime("%Y-%m-%d"):
-    #                 if advisories[ad] in shipped_advisory:
-    #                     status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is shipped live"})
-    #                 else:
-    #                     errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
-    #                     if errata_state != "SHIPPED_LIVE":
-    #                         status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
-    #                     else:
-    #                         shipped_advisory.append(advisories[ad])
-    #                         status['alert'].append({"release":f"{major}.{minor}", "status": f"{assembly} {ad} advisory is shipped live"})
-    #         minor = minor - 1
-    #     else:
-    #         break
-    return Response(data=status)
+    return JsonResponse(status)
 
 
 @api_view(["GET"])
