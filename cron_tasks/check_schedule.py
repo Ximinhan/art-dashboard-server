@@ -10,6 +10,6 @@ if release_status['alert'] != []:
             channel="#art-bot-monitoring",
             text=' \n'.join([msg['status'] for msg in release_status['alert']]),
             thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
-    print(f"message posted in https://redhat-internal.slack.com/archives/{response['channel']}/p{response['ts']}")
+    print(f"message posted in https://redhat-internal.slack.com/archives/{response['channel']}/p{response['ts'].replace('.', '')}")
 else:
     print("No alert", [msg['status'] for msg in release_status['message']])
