@@ -227,13 +227,13 @@ def get_release_status(request):
         res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{version}", headers=headers)
         advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
         for ad in advisories:
-            if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == datetime.now().strftime("%Y-%m-%d"):
+            if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == (datetime.now()+timedelta(days=1)).strftime("%Y-%m-%d"):
                 if advisories[ad] in shipped_advisory:
                     status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
                 else:
                     errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
                     if errata_state != "SHIPPED_LIVE":
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is not shipped live, release date is tomorrow"})
                     else:
                         shipped_advisory.append(advisories[ad])
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
