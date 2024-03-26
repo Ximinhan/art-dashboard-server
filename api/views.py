@@ -196,11 +196,11 @@ def get_release_schedule(request):
     if branch_version is None:
         return JsonResponse({"status": "error", "message": "Missing \"branch_version\" params in the url."})
     if request_type == "ga":
-        return JsonResponse(get_ga_schedule(branch_version))
+        return JsonResponse(get_ga_schedule(branch_version), safe=False)
     elif request_type == "release":
-        return JsonResponse(get_release_schedule(branch_version))
+        return JsonResponse(get_release_schedule(branch_version), safe=False)
     elif request_type == "feature_freeze":
-        return JsonResponse(get_feature_freeze_schedule(branch_version))
+        return JsonResponse(get_feature_freeze_schedule(branch_version), safe=False)
 
 
 shipped_advisory = []
