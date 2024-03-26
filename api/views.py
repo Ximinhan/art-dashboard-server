@@ -215,7 +215,7 @@ def get_release_status(request):
         version = minor - r
         advisory_schedule = get_advisory_schedule(f"{major}.{version}")['all_ga_tasks']
         for release in advisory_schedule:
-            if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now()+timedelta(days=1):
+            if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now():
                 release_date, release_name = release['date_finish'], release['name']
             else:
                 break
@@ -227,13 +227,13 @@ def get_release_status(request):
         res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{version}", headers=headers)
         advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
         for ad in advisories:
-            if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == (datetime.now()+timedelta(days=1)).strftime("%Y-%m-%d"):
+            if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == datetime.now().strftime("%Y-%m-%d"):
                 if advisories[ad] in shipped_advisory:
                     status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
                 else:
                     errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
                     if errata_state != "SHIPPED_LIVE":
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is not shipped live, release date is tomorrow"})
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
                     else:
                         shipped_advisory.append(advisories[ad])
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
