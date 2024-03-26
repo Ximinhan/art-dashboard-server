@@ -215,7 +215,7 @@ def get_release_status(request):
         version = minor - r
         advisory_schedule = get_advisory_schedule(f"{major}.{version}")['all_ga_tasks']
         for release in advisory_schedule:
-            if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now():
+            if datetime.strptime(release['date_finish'],"%Y-%m-%d") < datetime.now()+timedelta(days=1):
                 release_date, release_name = release['date_finish'], release['name']
             else:
                 break
