@@ -198,7 +198,7 @@ def get_release_schedule(request):
     if request_type == "ga":
         return JsonResponse(get_ga_schedule(branch_version), safe=False)
     elif request_type == "release":
-        return JsonResponse(get_release_schedule(branch_version), safe=False)
+        return JsonResponse(get_release_schedule(branch_version))
     elif request_type == "feature_freeze":
         return JsonResponse(get_feature_freeze_schedule(branch_version), safe=False)
 
