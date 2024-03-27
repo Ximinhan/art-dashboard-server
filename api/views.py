@@ -209,7 +209,7 @@ shipped_advisory = []
 def get_release_status(request):
     ga_version = get_ga_version()
     major, minor = int(ga_version.split('.')[0]), int(ga_version.split('.')[1])
-    status = {"message":[], "alert":[]}
+    status = {"message":[], "alert":[], "unshipped": []}
     headers = {"Authorization": f"token {os.environ['GITHUB_PERSONAL_ACCESS_TOKEN']}"}
     for r in range(0, 4):
         version = minor - r
@@ -239,7 +239,7 @@ def get_release_status(request):
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
                     else:
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is {errata_state}, release date is today"})
-                        
+                        status['unshipped'].append({advisories[ad]: f"{assembly} {ad} advisory"})
     return JsonResponse(status)
 
 
