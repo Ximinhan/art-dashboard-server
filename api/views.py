@@ -229,7 +229,7 @@ def get_release_status(request):
         for ad in advisories:
             if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == datetime.now().strftime("%Y-%m-%d"):
                 if advisories[ad] in shipped_advisory:
-                    status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
+                    status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
                 else:
                     errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
                     if errata_state == "SHIPPED_LIVE":
