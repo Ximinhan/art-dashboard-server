@@ -238,7 +238,7 @@ def get_release_status(request):
                     elif errata_state == "DROPPED_NO_SHIP":
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
                     else:
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is not shipped live, release date is today"})
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is {errata_state}, release date is today"})
                         
     return JsonResponse(status)
 
