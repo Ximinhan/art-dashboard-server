@@ -232,11 +232,14 @@ def get_release_status(request):
                     status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
                 else:
                     errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
-                    if errata_state != "SHIPPED_LIVE":
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is not shipped live, release date is today"})
-                    else:
+                    if errata_state == "SHIPPED_LIVE":
                         shipped_advisory.append(advisories[ad])
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} {ad} advisory is shipped live"})
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
+                    elif errata_state == "DROPPED_NO_SHIP":
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
+                    else:
+                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is not shipped live, release date is today"})
+                        
     return JsonResponse(status)
 
 
