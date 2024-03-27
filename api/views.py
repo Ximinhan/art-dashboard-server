@@ -239,7 +239,7 @@ def get_release_status(request):
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
                     else:
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is {errata_state}, release date is today"})
-                        status['unshipped'].append({advisories[ad]: f"{assembly} {ad} advisory"})
+                        status['unshipped'].append({"advisory": advisories[ad], "note": f"{assembly} {ad} advisory"})
     return JsonResponse(status)
 
 

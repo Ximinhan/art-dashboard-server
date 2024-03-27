@@ -19,13 +19,14 @@ if release_status['alert'] != []:
     if release_status['unshipped'] != []:
         post_slack_message("start monitoring advisory not in shipped live status, interval set to 1 hour ...", thread_ts=response['ts'])
         while release_status['unshipped'] != []:
-            for ad, msg in release_status['unshipped'].items():
+            for item in release_status['unshipped']:
+                ad =  item['advisory']
                 # check ad status
                 advisory_status_response = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/advisory_activites/?advisory={ad}").json()
                 advisory_status = advisory_status_response['data'][-1]['attributes']['added']
                 if advisory_status == "SHIPPED_LIVE" or advisory_status == "DROPPED_NO_SHIP":
-                    release_status['unshipped'].pop(ad)
-                    post_slack_message(f"{msg} status changed to {advisory_status}", thread_ts=response['ts'])
+                    release_status['unshipped'].remove(item)
+                    post_slack_message(f"{item['note']} status changed to {advisory_status}", thread_ts=response['ts'])
             # sleep 1 hours
             print(f"sleeping 1 hours due to {release_status['unshipped']}")
             time.sleep(3600)
