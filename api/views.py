@@ -225,21 +225,28 @@ def get_release_status(request):
             assembly = re.search(r'\d+\.\d+.\d+', release_name).group()
         status['message'].append({"release":f"{major}.{version}", "status": f"{assembly} release date is {release_date} and {release['name']} release date is {release['date_finish']}"})
         res = requests.get(f"https://api.github.com/repos/openshift/ocp-build-data/contents/releases.yml?ref=openshift-{major}.{version}", headers=headers)
-        advisories = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']['group']['advisories']
-        for ad in advisories:
-            if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == datetime.now().strftime("%Y-%m-%d"):
-                if advisories[ad] in shipped_advisory:
-                    status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
-                else:
-                    errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
-                    if errata_state == "SHIPPED_LIVE":
-                        shipped_advisory.append(advisories[ad])
+        release_assembly = yaml.safe_load(base64.b64decode(res.json()['content']))['releases'][assembly]['assembly']
+        if "group" in release_assembly.keys():
+            if 'advisories!' in release_assembly['group'].keys():
+                advisories = release_assembly['group']['advisories!']
+            elif 'advisories' in release_assembly['group'].keys():
+                advisories = release_assembly['group']['advisories']
+            else:
+                advisories = {}
+            for ad in advisories:
+                if datetime.strptime(release_date,"%Y-%m-%d").strftime("%Y-%m-%d") == datetime.now().strftime("%Y-%m-%d"):
+                    if advisories[ad] in shipped_advisory:
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
-                    elif errata_state == "DROPPED_NO_SHIP":
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
                     else:
-                        status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is {errata_state}, release date is today"})
-                        status['unshipped'].append({"advisory": advisories[ad], "note": f"{assembly} {ad} advisory"})
+                        errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
+                        if errata_state == "SHIPPED_LIVE":
+                            shipped_advisory.append(advisories[ad])
+                            status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
+                        elif errata_state == "DROPPED_NO_SHIP":
+                            status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is dropped"})
+                        else:
+                            status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is {errata_state}, release date is today"})
+                            status['unshipped'].append({"advisory": advisories[ad], "note": f"{assembly} {ad} advisory"})
     return JsonResponse(status)
 
 
