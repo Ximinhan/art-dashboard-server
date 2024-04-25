@@ -8,8 +8,8 @@ from slack_sdk import WebClient
 slack_token = os.environ.get('SLACK_TOKEN', None)
 def post_slack_message(message: str, thread_ts: Optional[str] = None,):
     response = WebClient(token=slack_token).chat_postMessage(
-                #channel="#forum-ocp-release",
-                channel="#art-bot-monitoring",
+                channel="#forum-ocp-release",
+                #channel="#art-bot-monitoring",
                 text=message,
                 thread_ts=thread_ts, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
     return response
