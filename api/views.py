@@ -238,7 +238,11 @@ def get_release_status(request):
                     if advisories[ad] in shipped_advisory:
                         status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
                     else:
-                        errata_state = get_advisory_status_activities(advisories[ad])['data'][-1]['attributes']['added']
+                        errata_activity = get_advisory_status_activities(advisories[ad])['data']
+                        if len(errata_activity) > 0:
+                            errata_state = errata_activity[-1]['attributes']['added']
+                        else:
+                            errata_state = "NEW_FILES"
                         if errata_state == "SHIPPED_LIVE":
                             shipped_advisory.append(advisories[ad])
                             status['alert'].append({"release":f"{major}.{version}", "status": f"{assembly} <https://errata.devel.redhat.com/advisory/{advisories[ad]}|{ad}> advisory is shipped live"})
