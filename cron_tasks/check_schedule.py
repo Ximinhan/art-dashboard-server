@@ -22,7 +22,11 @@ if release_status['alert'] != []:
             for item in release_status['unshipped']:
                 # check ad status
                 advisory_status_response = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/advisory_activites/?advisory={item['advisory']}").json()
-                advisory_status = advisory_status_response['data'][-1]['attributes']['added']
+                errata_activity = advisory_status_response['data']
+                if len(errata_activity) > 0:
+                    advisory_status = errata_activity[-1]['attributes']['added']
+                else:
+                    advisory_status = "NEW_FILES"
                 if advisory_status == "SHIPPED_LIVE" or advisory_status == "DROPPED_NO_SHIP":
                     release_status['unshipped'].remove(item)
                     post_slack_message(f"{item['note']} status changed to {advisory_status}", thread_ts=response['ts'])
