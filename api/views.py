@@ -291,16 +291,7 @@ def get_release_prepare_alert(request):
     Check if there are any release need to prepare today
     return format:
     {
-        "releases": [
-            [
-            "4.16.3",
-            "2024-07-10"
-            ],
-            [
-            "4.15.22",
-            "2024-07-10"
-            ]
-        ]
+        "releases": [["4.16.3", "2024-07-10"], ["4.15.22", "2024-07-10"]]
     }
     """
     ga_version = get_ga_version()
@@ -317,7 +308,6 @@ def get_release_prepare_alert(request):
             if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
                 # today is the day after development cutoff, we will prepare the release
                 release_date = get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']
-                print(release_date)
                 releases_need_to_prepare.append([release['path'][-1], release_date])
                 break
     return Response({"releases": releases_need_to_prepare}, status=200)
