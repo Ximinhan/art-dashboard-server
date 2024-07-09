@@ -300,7 +300,7 @@ def get_release_prepare_alert(request):
     major, minor = ga_version.split(".")
     versions = []
     for i in range(5):
-        previous_minor = minor - i if minor - i >= 0 else 0
+        previous_minor = int(minor) - i if int(minor) - i >= 0 else 0
         versions.append(f"{major}.{previous_minor}")
     # check pp if today is 7 days before next release day(one day after cutoff day)
     for version in versions:
