@@ -316,7 +316,9 @@ def get_release_prepare_alert(request):
         for release in dev_schedule:
             if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
                 # today is the day after development cutoff, we will prepare the release
-                releases_need_to_prepare.append([release['path'][-1], get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']])
+                release_date = get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']
+                print(release_date)
+                releases_need_to_prepare.append([release['path'][-1], release_date])
                 break
     return Response({"releases": releases_need_to_prepare}, status=200)
 
