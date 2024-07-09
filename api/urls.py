@@ -16,5 +16,6 @@ urlpatterns = [
     re_path('check_auth', views.check_auth, name='check_auth'),
     re_path('advisory_activites', views.get_advisory_activities, name='advisory_activities'),
     re_path('release_schedule', views.get_release_schedule, name='release_schedule'),
-    re_path('release_status', views.get_release_status, name='release_status')
+    re_path('release_status', views.get_release_status, name='release_status'),
+    re_path('release_prepare_alert', views.get_release_prepare_alert, name='release_prepare_alert')
 ]

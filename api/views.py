@@ -17,11 +17,11 @@ import re
 import yaml
 import os
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import requests
 import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
-from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, get_feature_freeze_schedule, get_ga_schedule
+from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, get_feature_freeze_schedule, get_ga_schedule, get_development_cutoff_schedule
 
 
 class BuildDataFilter(django_filters.FilterSet):
@@ -282,6 +282,36 @@ def rpms_images_fetcher_view(request):
         "status": "success",
         "payload": result
     }, status=200)
+
+
+@api_view(["GET"])
+def get_release_prepare_alert(request):
+    """
+    Check if there are any release need to prepare today
+    return format:
+    {
+        "releases":[["4.16.x", "2024-Jul-09"], []]
+    }
+    """
+    # get ga release version
+    ga_version = get_ga_version()
+    releases_need_to_prepare = []
+    # loop from ga version to previous until eol release, there is a treak that we look for previous 5 releases, so no need to connect github
+    major, minor = ga_version.split(".")
+    versions = []
+    for i in range(5):
+        previous_minor = minor - i if minor - i >= 0 else 0
+        versions.append(f"{major}.{previous_minor}")
+    # check pp if today is 7 days before next release day(one day after cutoff day)
+    for version in versions:
+        dev_schedule = get_development_cutoff_schedule(version)
+        for release in dev_schedule:
+            if date.fromisoformat(release['date_finish']) == (date.today() - timedelta(days=1)):
+                # today is the day after development cutoff, we will prepare the release
+                releases_need_to_prepare.append([release['path'][-1], release['date_finish'])
+                break
+    # return release alert
+    return Response({"releases": releases_need_to_prepare}, status=200)
 
 
 @api_view(["POST"])

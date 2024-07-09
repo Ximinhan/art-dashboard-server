@@ -91,6 +91,11 @@ def get_ga_schedule(branch_version):
     return catch_request_result(f"{PP_SERVER}/openshift-{branch_version}/schedule-tasks/?name=OpenShift+Container+Platform+GA+Release+Schedule")
 
 
+@update_keytab
+def get_development_cutoff_schedule(branch_version):
+    return catch_request_result(f"{PP_SERVER}/openshift-{branch_version}.z/schedule-tasks/?flags_and__in=dev")
+
+
 def format_user_data(user_data):
     return user_data
 
