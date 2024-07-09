@@ -21,7 +21,8 @@ from datetime import datetime, timedelta, date
 import requests
 import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
-from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, get_feature_freeze_schedule, get_ga_schedule, get_development_cutoff_schedule
+from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, \
+        get_feature_freeze_schedule, get_ga_schedule, get_development_cutoff_schedule, get_ga_schedule_for_release
 
 
 class BuildDataFilter(django_filters.FilterSet):
@@ -290,10 +291,18 @@ def get_release_prepare_alert(request):
     Check if there are any release need to prepare today
     return format:
     {
-        "releases":[["4.16.x", "2024-Jul-09"], []]
+        "releases": [
+            [
+            "4.16.3",
+            "2024-07-10"
+            ],
+            [
+            "4.15.22",
+            "2024-07-10"
+            ]
+        ]
     }
     """
-    # get ga release version
     ga_version = get_ga_version()
     releases_need_to_prepare = []
     # loop from ga version to previous until eol release, there is a treak that we look for previous 5 releases, so no need to connect github
@@ -302,15 +311,13 @@ def get_release_prepare_alert(request):
     for i in range(5):
         previous_minor = int(minor) - i if int(minor) - i >= 0 else 0
         versions.append(f"{major}.{previous_minor}")
-    # check pp if today is 7 days before next release day(one day after cutoff day)
     for version in versions:
         dev_schedule = get_development_cutoff_schedule(version)
         for release in dev_schedule:
             if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
                 # today is the day after development cutoff, we will prepare the release
-                releases_need_to_prepare.append([release['path'][-1], release['date_finish']])
+                releases_need_to_prepare.append([release['path'][-1], get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']])
                 break
-    # return release alert
     return Response({"releases": releases_need_to_prepare}, status=200)
 
 
