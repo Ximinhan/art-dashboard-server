@@ -295,17 +295,14 @@ def get_release_prepare_alert(request):
     }
     """
     ga_version = get_ga_version()
+    major, minor = ga_version.split(".")
     releases_need_to_prepare = []
     # loop from ga version to previous until eol release, there is a treak that we look for previous 5 releases, so no need to connect github
-    major, minor = ga_version.split(".")
-    versions = []
-    for i in range(5):
-        previous_minor = int(minor) - i if int(minor) - i >= 0 else 0
-        versions.append(f"{major}.{previous_minor}")
+    versions = [f"{major}.{int(minor) - i if int(minor) - i >= 0 else 0}" for i in range(5)]
     for version in versions:
         dev_schedule = get_development_cutoff_schedule(version)
         for release in dev_schedule:
-            if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
+            if date.fromisoformat(release['date_finish']) == (date.today() - timedelta(days=1)):
                 # today is the day after development cutoff, we will prepare the release
                 release_date = get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']
                 releases_need_to_prepare.append([release['path'][-1], release_date])

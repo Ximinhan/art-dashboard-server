@@ -13,6 +13,18 @@ def post_slack_message(message: str, thread_ts: Optional[str] = None,):
                 text=message,
                 thread_ts=thread_ts, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
     return response
+# check release need to prepare
+# releases_needs_prepare = requests.get("https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_prepare_alert").json()
+# if releases_needs_prepare['releases'] ! = []:
+#     release_msg = "\n".join(f"- {msg[0]} : {msg[1]}" for msg in releases_needs_prepare['releases'])
+#     response = WebClient(token=slack_token).chat_postMessage(
+#                 channel="#team-art",
+#                 #channel="#art-bot-monitoring",
+#                 text=f"@release-artists we need to prepare the following GA release today:\n {release_msg}",
+#                 thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
+
+
+# check and monitor release advisory status
 release_status = requests.get("https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_status").json()
 if release_status['alert'] != []:
     response = post_slack_message(' \n'.join([msg['status'] for msg in release_status['alert']]))
@@ -38,3 +50,4 @@ if release_status['alert'] != []:
         post_slack_message("All advisory now in shipped live status, stop monitoring", thread_ts=response['ts'])
 else:
     print("No alert", [msg['status'] for msg in release_status['message']])
+
