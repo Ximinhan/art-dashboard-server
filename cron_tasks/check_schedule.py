@@ -13,9 +13,11 @@ def post_slack_message(message: str, thread_ts: Optional[str] = None,):
                 text=message,
                 thread_ts=thread_ts, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
     return response
+
+
 # check release need to prepare
 releases_needs_prepare = requests.get("https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_prepare_alert").json()
-if releases_needs_prepare['releases'] ! = []:
+if releases_needs_prepare['releases'] != []:
     release_msg = "\n".join(f"- {msg[0]} : {msg[1]}" for msg in releases_needs_prepare['releases'])
     response = WebClient(token=slack_token).chat_postMessage(
                 #channel="#team-art",

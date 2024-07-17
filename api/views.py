@@ -302,7 +302,7 @@ def get_release_prepare_alert(request):
     for version in versions:
         dev_schedule = get_development_cutoff_schedule(version)
         for release in dev_schedule:
-            if date.fromisoformat(release['date_finish']) == (date.today() - timedelta(days=1)):
+            if date.fromisoformat(release['date_finish']) == (date.today()):
                 # today is the day after development cutoff, we will prepare the release
                 release_date = get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']
                 releases_need_to_prepare.append([release['path'][-1], release_date])
