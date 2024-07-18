@@ -20,9 +20,9 @@ releases_needs_prepare = requests.get("https://art-dash-server-hackspace-ximhan.
 if releases_needs_prepare['releases'] != []:
     release_msg = "\n".join(f"- {msg[0]} : {msg[1]}" for msg in releases_needs_prepare['releases'])
     response = WebClient(token=slack_token).chat_postMessage(
-                #channel="#team-art",
-                channel="#art-bot-monitoring",
-                text=f"[TEST] we need to prepare the following GA release today:\n {release_msg}",
+                channel="#team-art",
+                #channel="#art-bot-monitoring",
+                text=f"We need to prepare the following releases today:\n{release_msg}",
                 thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
 
 
