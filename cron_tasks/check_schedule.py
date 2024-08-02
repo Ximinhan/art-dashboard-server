@@ -6,10 +6,9 @@ import time
 from slack_sdk import WebClient
 
 slack_token = os.environ.get('SLACK_TOKEN', None)
-def post_slack_message(message: str, thread_ts: Optional[str] = None,):
+def post_slack_message(message: str, thread_ts: Optional[str] = None, channel: Optional[str] = "#forum-ocp-release"):
     response = WebClient(token=slack_token).chat_postMessage(
-                channel="#forum-ocp-release",
-                #channel="#art-bot-monitoring",
+                channel=channel, #channel="#art-bot-monitoring",
                 text=message,
                 thread_ts=thread_ts, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
     return response
@@ -18,12 +17,8 @@ def post_slack_message(message: str, thread_ts: Optional[str] = None,):
 # check release need to prepare
 releases_needs_prepare = requests.get("https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_prepare_alert").json()
 if releases_needs_prepare['releases'] != []:
-    release_msg = "\n".join(f"- {msg[0]} : {msg[1]}" for msg in releases_needs_prepare['releases'])
-    response = WebClient(token=slack_token).chat_postMessage(
-                channel="#team-art",
-                #channel="#art-bot-monitoring",
-                text=f"We need to prepare the following releases today:\n{release_msg}",
-                thread_ts=None, username="art-release-bot", link_names=True, attachments=[], icon_emoji=":dancing_robot:", reply_broadcast=False)
+    release_msg = "\n".join(f"• {msg[0]} : {msg[1]}, latest <https://amd64.ocp.releases.ci.openshift.org/releasestream/{msg[2]}.0-0.nightly/release/{msg[3]}|{msg[3]}> is {msg[4]}" for msg in releases_needs_prepare['releases'])
+    post_slack_message(f"We need to prepare the following releases today:\n{release_msg}", thread_ts=None, channel="#team-art")
 
 
 # check and monitor release advisory status
@@ -38,14 +33,10 @@ if release_status['alert'] != []:
                 # check ad status
                 advisory_status_response = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/advisory_activites/?advisory={item['advisory']}").json()
                 errata_activity = advisory_status_response['data']
-                if len(errata_activity) > 0:
-                    advisory_status = errata_activity[-1]['attributes']['added']
-                else:
-                    advisory_status = "NEW_FILES"
+                advisory_status = errata_activity[-1]['attributes']['added'] if len(errata_activity) > 0 else "NEW_FILES"
                 if advisory_status == "SHIPPED_LIVE" or advisory_status == "DROPPED_NO_SHIP":
                     release_status['unshipped'].remove(item)
                     post_slack_message(f"{item['note']} status changed to {advisory_status}", thread_ts=response['ts'])
-                    # update original message
             # sleep 1 hours
             print(f"sleeping 1 hours due to {release_status['unshipped']}")
             time.sleep(3600)
