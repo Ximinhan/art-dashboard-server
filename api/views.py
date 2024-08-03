@@ -291,7 +291,7 @@ def get_release_prepare_alert(request):
     Check if there are any release need to prepare today
     return format:
     {
-        "releases": [["4.16.3", "2024-07-10", "4.16.0-0.nightly-2024-08-02-083003", "Accepted"], ["4.15.22", "2024-07-10", "4.15.0-0.nightly-2024-08-02-083003", "Rejected"]]
+        "releases": [["4.16.3", "2024-07-10", "4.16", "4.16.0-0.nightly-2024-08-02-083003", "Accepted"], ["4.15.22", "2024-07-10", "4.15", "4.15.0-0.nightly-2024-08-02-083003", "Rejected"]]
     }
     """
     rc_amd_api = "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream"
@@ -306,14 +306,26 @@ def get_release_prepare_alert(request):
             if date.fromisoformat(release['date_finish']) == (date.today() - timedelta(days=1)):
                 # today is the day after development cutoff, we will prepare the release
                 nightly = request.get(f"{rc_amd_api}/{version}.0-0.nightly/tags").json()
-                releases_need_to_prepare.append([release['path'][-1],
-                                                 get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish'],
-                                                 version,
-                                                 nightly['tags'][0]['name'],
-                                                 nightly['tags'][0]['phase']])
+                releases_need_to_prepare.append([release['path'][-1], get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish'], version, nightly['tags'][0]['name'], nightly['tags'][0]['phase']])
                 break
     return Response({"releases": releases_need_to_prepare}, status=200)
 
+
+@api_view(["GET"])
+def get_next_release(request):
+    """
+    Get next release date and version
+    """
+    version = request.query_params.get("release", None)
+    if version is None:
+        version = get_ga_version()
+    dev_schedule = get_development_cutoff_schedule(version)
+    for release in dev_schedule:
+        if date.fromisoformat(release['date_finish']) > date.today():
+            next_release_version = release['path'][-1]
+            next_release_date = get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish']
+            break
+    return Response({"next_release_version": next_release_version, "next_release_date": next_release_date}, status=200)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
