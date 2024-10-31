@@ -98,6 +98,7 @@ def get_development_cutoff_schedule(branch_version):
 
 @update_keytab
 def get_ga_schedule_for_release(branch_version, release):
+    release = release.split(" ")[0]
     return catch_request_result(f"{PP_SERVER}/openshift-{branch_version}.z/schedule-tasks/?flags_and__in=ga&search={release}")
 
 
