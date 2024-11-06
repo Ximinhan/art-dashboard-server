@@ -24,6 +24,8 @@ if release_status['alert'] != []:
     print(f"message posted in https://redhat-internal.slack.com/archives/{response['channel']}/p{response['ts'].replace('.', '')}")
     if release_status['unshipped'] != []:
         post_slack_message("start monitoring advisory not in shipped live status, interval set to 1 hour ...", thread_ts=response['ts'])
+        duration = 1
+        alert_artist = False
         while release_status['unshipped'] != []:
             for item in release_status['unshipped']:
                 advisory_status_response = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/advisory_activites/?advisory={item['advisory']}").json()
@@ -33,6 +35,10 @@ if release_status['alert'] != []:
                     post_slack_message(f"{item['note']} status changed to {advisory_status}", thread_ts=response['ts'])
             print(f"sleeping 1 hours due to {release_status['unshipped']}")
             time.sleep(3600)
+            duration = duration + 1
+            if duration > 24 and not alert_artist:
+                post_slack_message("@release-artist those advisories are not all shipped after a day of ship day, please take a look a push them ship as soon as possible", thread_ts=response['ts'])
+                alert_artist = True
         post_slack_message("All advisory now in shipped live status, stop monitoring", thread_ts=response['ts'])
 else:
     print("No alert", [msg['status'] for msg in release_status['message']])
