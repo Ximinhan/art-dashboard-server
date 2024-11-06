@@ -60,6 +60,8 @@ def catch_request_result(url):
     try:
         print(url)
         response = requests.get(url, verify=ssl.get_default_verify_paths().openssl_cafile, auth=HTTPSPNEGOAuth(), headers={'Content-Type': 'application/json'})
+        if response.status_code != 200:
+            raise response.text
         return json.loads(response.text)
     except Exception as e:
         print(e)
