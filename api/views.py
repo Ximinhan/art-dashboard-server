@@ -212,7 +212,7 @@ def get_release_status(request):
     major, minor = int(ga_version.split('.')[0]), int(ga_version.split('.')[1])
     status = {"message":[], "alert":[], "unshipped": []}
     headers = {"Authorization": f"token {os.environ['GITHUB_PERSONAL_ACCESS_TOKEN']}"}
-    for r in range(0, 4):
+    for r in range(0, 5):
         version = minor - r
         advisory_schedule = get_advisory_schedule(f"{major}.{version}")['all_ga_tasks']
         for release in advisory_schedule:
