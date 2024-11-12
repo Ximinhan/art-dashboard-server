@@ -5,6 +5,7 @@ from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 from .decorators import update_keytab
 from urllib.parse import urlparse
 from requests_gssapi import HTTPSPNEGOAuth
+from api.kerberos import do_kinit
 import ssl
 
 
@@ -72,6 +73,7 @@ def get_advisory_status_activities(advisory_id):
     :param advisory_id: The id of the advisory to get data for.
     :return: Dict, advisory data.
     """
+    do_kinit()
     return catch_request_result(f"https://errata.devel.redhat.com/api/v1/erratum/{advisory_id}/activities?filter[what]=status")
 
 
