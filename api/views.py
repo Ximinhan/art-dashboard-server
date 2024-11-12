@@ -19,6 +19,8 @@ import os
 import jwt
 from datetime import datetime, timedelta, date
 import requests
+from jenkinsapi.utils.crumb_requester import CrumbRequester
+from jenkinsapi.jenkins import Jenkins
 import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
 from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, \
@@ -310,6 +312,45 @@ def get_release_prepare_alert(request):
                 break
     return Response({"releases": releases_need_to_prepare}, status=200)
 
+
+@api_view(["GET"])
+def trigger_jenkins_job(request):
+    assembly = request.query_params.get("assembly", None)
+    if version is None:
+        return Response({"error": "assembly parameter not provided"}, status=200)
+    if not os.environ['JENKINS_SERVICE_ACCOUNT'] or os.environ['JENKINS_SERVER_TOKEN']:
+        return Response({"error": "missing jenkins account"}, status=200)
+
+    requester = CrumbRequester(
+        username=os.environ['JENKINS_SERVICE_ACCOUNT'],
+        password=os.environ['JENKINS_SERVER_TOKEN'],
+        baseurl="https://art-jenkins.apps.prod-stable-spoke1-dc-iad2.itup.redhat.com"
+    )
+
+    jenkins_client = Jenkins(
+        jenkins_url,
+        username=os.environ['JENKINS_SERVICE_ACCOUNT'],
+        password=os.environ['JENKINS_SERVER_TOKEN'],
+        requester=requester,
+        lazy=True
+    )
+    job = jenkins_client.get_job("aos-cd-builds/build%2Foperator-sdk_sync")
+    params = {
+        'BUILD_VERSION': f"{assembly.split('.')[0]}.{assembly.split('.')[1]}",
+        'ASSEMBLY': assembly,
+    }
+    queue_item = job.invoke(build_params=params)
+    while True:
+        try:
+            data: dict = queue_item.poll()
+            build_number = data['executable']['number']
+            break
+        except (KeyError, TypeError):
+            logger.info('Build not started yet, sleeping for %s seconds...', delay)
+            time.sleep(delay)
+
+    triggered_build_url = f"{data['task']['url']}{build_number}"
+    return Response({"build_url": triggered_build_url}, status=200)
 
 @api_view(["GET"])
 def get_next_release(request):

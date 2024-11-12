@@ -19,4 +19,5 @@ urlpatterns = [
     re_path('release_status', views.get_release_status, name='release_status'),
     re_path('release_prepare_alert', views.get_release_prepare_alert, name='release_prepare_alert'),
     re_path('next_release', views.get_next_release, name='next_release'),
+    re_path('trigger_jenkins_job', views.trigger_jenkins_job, name='trigger_jenkins_job'),
 ]
