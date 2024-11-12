@@ -346,8 +346,8 @@ def trigger_jenkins_job(request):
             build_number = data['executable']['number']
             break
         except (KeyError, TypeError):
-            logger.info('Build not started yet, sleeping for %s seconds...', delay)
-            time.sleep(delay)
+            print('Build not started yet, sleeping for 5 seconds...')
+            time.sleep(5)
 
     triggered_build_url = f"{data['task']['url']}{build_number}"
     return Response({"build_url": triggered_build_url}, status=200)
