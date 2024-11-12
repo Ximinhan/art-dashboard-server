@@ -318,7 +318,7 @@ def trigger_jenkins_job(request):
     assembly = request.query_params.get("assembly", None)
     if assembly is None:
         return Response({"error": "assembly parameter not provided"}, status=200)
-    if not os.environ['JENKINS_SERVICE_ACCOUNT'] or os.environ['JENKINS_SERVER_TOKEN']:
+    if not os.environ['JENKINS_SERVICE_ACCOUNT'] or not os.environ['JENKINS_SERVER_TOKEN']:
         return Response({"error": "missing jenkins account"}, status=200)
 
     requester = CrumbRequester(
