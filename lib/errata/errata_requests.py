@@ -5,7 +5,6 @@ from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 from .decorators import update_keytab
 from urllib.parse import urlparse
 from requests_gssapi import HTTPSPNEGOAuth
-from api import util
 import ssl
 
 
@@ -67,7 +66,6 @@ def catch_request_result(url):
 
 
 @update_keytab
-@util.refresh_krb_auth
 def get_advisory_status_activities(advisory_id):
     """
     This method returns advisory activities for a given id.
