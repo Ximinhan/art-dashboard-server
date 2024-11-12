@@ -328,7 +328,7 @@ def trigger_jenkins_job(request):
     )
 
     jenkins_client = Jenkins(
-        jenkins_url,
+        "https://art-jenkins.apps.prod-stable-spoke1-dc-iad2.itup.redhat.com",
         username=os.environ['JENKINS_SERVICE_ACCOUNT'],
         password=os.environ['JENKINS_SERVER_TOKEN'],
         requester=requester,
