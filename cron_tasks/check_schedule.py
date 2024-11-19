@@ -36,7 +36,7 @@ if release_status['alert'] != []:
                     # extra advisory changed to shipped_live
                     if "extra" in item['note'] and advisory_status == "SHIPPED_LIVE":
                         trigger_jenkins_response = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/trigger_jenkins_job/?assembly={item['note'].split(' ')[0]}").json()
-                        post_slack_message(f"@release-artists <{trigger_jenkins_response['build_url']}|operator_sdk> job for {item['note'].split(' ')[0]} triggered", thread_ts=response['ts'])
+                        post_slack_message(f"<{trigger_jenkins_response['build_url']}|operator_sdk> job for {item['note'].split(' ')[0]} triggered", thread_ts=response['ts'])
 
             print(f"sleeping 1 hours due to {release_status['unshipped']}")
             time.sleep(3600)
