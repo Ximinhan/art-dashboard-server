@@ -45,7 +45,6 @@ def get_ga_version():
 
     return f"{ga_version[0]}.{ga_version[1]}"
 
-print(date.today())
 ga_version = get_ga_version()
 major, minor = ga_version.split(".")
 releases_need_to_ship = []
@@ -55,10 +54,12 @@ versions = [f"{major}.{i}" for i in range(start_minor, int(minor) + 1)]
 for version in versions:
     release_ship_schedule = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_schedule?type=release&branch_version={version}").json()
     for release in release_ship_schedule["all_ga_tasks"]:
-        if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
+        if date.fromisoformat(release['date_finish']) == (date.today()):
             releases_need_to_ship.append([release['name'].split(' ')[0], release['date_finish']])
             break
-print(releases_need_to_ship)
+if releases_need_to_ship != []:
+    ship_msg = "\n".join(f"• {msg[0]} : {msg[1]}" for msg in releases_need_to_ship)
+    post_slack_message(f"We need to ship the following releases today:\n{ship_msg}", thread_ts=None, channel="#ocp-sustaining-art-collaboration")
 
 # check and monitor release advisory status, moved to konflux now
 # release_status = requests.get("https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_status").json()
