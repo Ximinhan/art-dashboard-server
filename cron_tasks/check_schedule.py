@@ -1,7 +1,7 @@
 
 import os
 import re
-from datetime import date
+from datetime import date, timedelta
 import requests
 import time
 from typing import Optional
@@ -54,10 +54,8 @@ start_minor = 12
 versions = [f"{major}.{i}" for i in range(start_minor, int(minor) + 1)]
 for version in versions:
     release_ship_schedule = requests.get(f"https://art-dash-server-hackspace-ximhan.apps.artc2023.pc3z.p1.openshiftapps.com/api/v1/release_schedule?type=release&branch_version={version}").json()
-    print(version)
-    print(release_ship_schedule)
     for release in release_ship_schedule["all_ga_tasks"]:
-        if date.fromisoformat(release['date_finish']) == (date.today()):
+        if date.fromisoformat(release['date_finish']) == (date.today() + timedelta(days=1)):
             releases_need_to_ship.append([release['name'].split(' ')[0], release['date_finish']])
             break
 print(releases_need_to_ship)
