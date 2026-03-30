@@ -108,6 +108,10 @@ def get_ga_schedule(branch_version):
 def get_development_cutoff_schedule(branch_version):
     return catch_pp_request_result(f"{PP_SERVER}/openshift-{branch_version}.z/schedule-tasks/?flags_and__in=dev")
 
+@update_keytab
+def get_release_ship_schedule(branch_version):
+    return catch_pp_request_result(f"{PP_SERVER}/openshift-{branch_version}.z/schedule-tasks/?flags_and__in=ga")
+
 
 @update_keytab
 def get_ga_schedule_for_release(branch_version, release):

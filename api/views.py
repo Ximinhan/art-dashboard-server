@@ -25,7 +25,8 @@ from jenkinsapi.jenkins import Jenkins
 import base64
 from build_interface.settings import SECRET_KEY, SESSION_COOKIE_DOMAIN, JWTAuthentication
 from lib.errata.errata_requests import get_advisory_status_activities, get_advisory_schedule, \
-        get_feature_freeze_schedule, get_ga_schedule, get_development_cutoff_schedule, get_ga_schedule_for_release
+        get_feature_freeze_schedule, get_ga_schedule, get_development_cutoff_schedule, get_ga_schedule_for_release, \
+        get_release_ship_schedule
 
 
 class BuildDataFilter(django_filters.FilterSet):
@@ -313,6 +314,30 @@ def get_release_prepare_alert(request):
                 releases_need_to_prepare.append([release['path'][-1], get_ga_schedule_for_release(version, release['path'][-1])[0]['date_finish'], version, nightly['tags'][0]['name'], nightly['tags'][0]['phase']])
                 break
     return Response({"releases": releases_need_to_prepare}, status=200)
+
+
+@api_view(["GET"])
+def get_release_ship_alert(request):
+    """
+    Check if there are any release need to ship today
+    return format:
+    {
+        "releases": [["4.16.3", "2024-07-10"], ["4.15.22", "2024-07-10"]]
+    }
+    """
+    ga_version = get_ga_version()
+    major, minor = ga_version.split(".")
+    releases_need_to_ship = []
+    # loop from ga version to previous until eol release, there is a treak that we look for previous 5 releases, so no need to connect github
+    start_minor = 12
+    versions = [f"{major}.{i}" for i in range(start_minor, int(minor) + 1)]
+    for version in versions:
+        release_ship_schedule = get_release_ship_schedule(version)
+        for release in release_ship_schedule:
+            if date.fromisoformat(release['date_finish']) == (date.today()):
+                releases_need_to_ship.append([release['path'][-1], release['date_finish']])
+                break
+    return Response({"releases": releases_need_to_ship}, status=200)
 
 
 @api_view(["GET"])
