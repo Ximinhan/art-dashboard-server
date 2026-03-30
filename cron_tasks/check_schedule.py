@@ -1,7 +1,7 @@
 
 import os
 import re
-import date
+from datetime import date
 import requests
 import time
 from typing import Optional
@@ -45,6 +45,7 @@ def get_ga_version():
 
     return f"{ga_version[0]}.{ga_version[1]}"
 
+print(date.today())
 ga_version = get_ga_version()
 major, minor = ga_version.split(".")
 releases_need_to_ship = []
